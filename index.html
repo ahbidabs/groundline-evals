@@ -61,6 +61,8 @@ nav{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-
 .agent{padding:18px 4px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px;min-width:0}
 .agent p{font-size:.93rem;color:var(--muted)}
 .agent b{color:var(--ink);font-weight:600}
+.agent p.who{font-family:var(--mono);font-size:.74rem;letter-spacing:.02em;color:var(--accent)}
+.agent p.who::before{content:"Built by: "}
 @media (min-width:640px){.agent{padding:18px 20px 18px 0}}
 /* report */
 .report{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -143,21 +145,27 @@ footer{border-top:1px solid var(--line);padding-top:24px;display:flex;flex-direc
     <p class="muted">We focus on agents where a careful, trained grader can check the work against a correct answer or a clear rubric.</p>
     <div class="agents">
       <div class="agent"><h3>Document and invoice extraction</h3>
+        <p class="who">Accounts-payable automation, AI bookkeeping, insurance claims intake, lending document review</p>
         <p><b>Typical failures:</b> drops line items on page 2, reads the subtotal as the total, swaps day and month on non-US dates.</p>
         <p><b>We check:</b> every extracted field against a hand-built correct answer.</p></div>
       <div class="agent"><h3>Scheduling and email agents</h3>
+        <p class="who">AI assistants, recruiting coordination, field-service dispatch, sales follow-up tools</p>
         <p><b>Typical failures:</b> books the wrong time zone, misreads what the person asked for, sends a reply in the wrong tone.</p>
         <p><b>We check:</b> each action the agent took, against what the request actually needed.</p></div>
       <div class="agent"><h3>Voice agents</h3>
+        <p class="who">Customer-support platforms, collections and mortgage servicing, appointment booking, sales calling</p>
         <p><b>Typical failures:</b> gives wrong policy details, talks over the caller, misses when to hand off to a person.</p>
         <p><b>We check:</b> recorded calls against your scorecard, and where your AI grader disagrees with us.</p></div>
       <div class="agent"><h3>Compliance and risk review</h3>
+        <p class="who">Anti-money-laundering and KYC tools, fraud review, regulatory compliance software for banks and fintechs</p>
         <p><b>Typical failures:</b> closes a real alert as a false positive, or escalates a harmless one.</p>
         <p><b>We check:</b> each decision against an adjudicated answer, with the reason it was right or wrong.</p></div>
       <div class="agent"><h3>Browser and computer-use agents</h3>
+        <p class="who">Web automation startups, portal and back-office automation, AI that operates internal tools</p>
         <p><b>Typical failures:</b> stuck on a login or pop-up, clicks the wrong item, reports success on an unfinished task.</p>
         <p><b>We check:</b> scripted tasks run in your sandbox, reviewed step by step from the recording.</p></div>
       <div class="agent"><h3>Spreadsheet and finance copilots</h3>
+        <p class="who">Financial-modeling tools, FP&amp;A software, AI analysts for finance and accounting teams</p>
         <p><b>Typical failures:</b> wrong cell references, hard-coded numbers, a forecast whose statements don't tie out.</p>
         <p><b>We check:</b> formulas and outputs against a correct version of the model.</p></div>
     </div>
