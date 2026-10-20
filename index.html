@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Human-graded test sets and AI-grader calibration for AI agent teams.">
+<title>Groundline Evals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the sample report sits in a bordered "document" panel like a deliverable */
+:root{
+  --bg:#f6f7f8; --surface:#ffffff; --ink:#15191e; --muted:#5b6570; --line:#dde1e5;
+  --accent:#0d6a5a; --accent-soft:#e3f1ee;
+  --pass:#1f7a3a; --pass-soft:#e4f3e8; --fail:#b3261e; --fail-soft:#fbe9e7; --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --sans:"Schibsted Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1316; --surface:#161b1f; --ink:#e8ecef; --muted:#9aa5ae; --line:#2a3238;
+  --accent:#4fc1a8; --accent-soft:#16302b;
+  --pass:#5fcf7f; --pass-soft:#16301f; --fail:#ff8a80; --fail-soft:#3a1d1b; --warn:#f0b54a; --warn-soft:#352914;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1316; --surface:#161b1f; --ink:#e8ecef; --muted:#9aa5ae; --line:#2a3238;
+  --accent:#4fc1a8; --accent-soft:#16302b;
+  --pass:#5fcf7f; --pass-soft:#16301f; --fail:#ff8a80; --fail-soft:#3a1d1b; --warn:#f0b54a; --warn-soft:#352914;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:960px;margin:0 auto;padding-block:40px 64px;display:flex;flex-direction:column;gap:72px}
+h1,h2,h3{text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.4rem,3vw,1.85rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0;max-width:65ch}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500}
+.muted{color:var(--muted)}
+section{display:flex;flex-direction:column;gap:20px}
+nav{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.logo i{display:inline-block;width:18px;height:18px;border:2px solid var(--accent);border-radius:3px;position:relative}
+.logo i::after{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:2px;background:var(--accent)}
+.navlinks{display:flex;gap:18px;flex-wrap:wrap;font-size:.95rem}
+.navlinks a{color:var(--muted);text-decoration:none}.navlinks a:hover{color:var(--ink)}
+.hero{display:flex;flex-direction:column;gap:20px}
+.hero p{font-size:1.15rem;color:var(--muted)}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-block;padding:11px 18px;border-radius:6px;font-weight:600;text-decoration:none;border:1px solid var(--accent)}
+.btn.primary{background:var(--accent);color:var(--bg)}
+.btn.ghost{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:16px}
+.svc{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.svc .eyebrow{color:var(--muted)}
+.svc p{font-size:.95rem;color:var(--muted)}
+/* report */
+.report{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.banner{background:var(--warn-soft);color:var(--warn);font-size:.85rem;padding:10px 20px;border-bottom:1px solid var(--line);font-weight:500}
+.rbody{padding:24px;display:flex;flex-direction:column;gap:28px}
+.rhead{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:16px}
+.rhead .meta{font-family:var(--mono);font-size:.78rem;color:var(--muted);line-height:1.7}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat span{font-size:.82rem;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-right:8px}
+.pill{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:999px;font-weight:500;white-space:nowrap}
+.pill.pass{background:var(--pass-soft);color:var(--pass)}
+.pill.fail{background:var(--fail-soft);color:var(--fail)}
+.pill.tag{background:var(--accent-soft);color:var(--accent)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{font:inherit;font-size:.85rem;font-family:var(--mono);background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.case{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.pane{border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.pane h4{margin:0;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+pre{margin:0;font-family:var(--mono);font-size:.8rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.bad{background:var(--fail-soft);color:var(--fail);border-radius:3px;padding:0 2px}
+.verdict{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.92rem}
+.recs{display:flex;flex-direction:column;gap:10px;padding:0;margin:0;list-style:none;counter-reset:r}
+.recs li{display:grid;grid-template-columns:28px 1fr;gap:8px;max-width:70ch}
+.recs li::before{counter-increment:r;content:counter(r);font-family:var(--mono);font-size:.8rem;color:var(--accent);font-weight:600;padding-top:2px}
+/* pilot */
+.pilot{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:24px;align-items:start}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.steps li{display:grid;grid-template-columns:72px 1fr;gap:12px}
+.steps .when{font-family:var(--mono);font-size:.78rem;color:var(--accent);padding-top:3px}
+.price{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.price b.big{font-size:2.4rem;font-weight:800;letter-spacing:-.02em}
+.price ul{margin:0;padding-left:18px;color:var(--muted);font-size:.95rem;display:flex;flex-direction:column;gap:4px}
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px}
+.about div{display:flex;flex-direction:column;gap:10px}
+footer{border-top:1px solid var(--line);padding-top:24px;display:flex;flex-direction:column;gap:12px}
+.copyrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.copyrow code{font-family:var(--mono);font-size:.9rem;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;user-select:all}
+.copyrow button{font:inherit;font-size:.85rem;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+@media (prefers-reduced-motion: no-preference){.btn,.tabs button{transition:background .15s,color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo"><i aria-hidden="true"></i>Groundline Evals</div>
+    <div class="navlinks"><a href="#what">What we do</a><a href="#sample">Sample report</a><a href="#pilot">Pilot</a><a href="#about">About</a></div>
+  </nav>
+
+  <header class="hero">
+    <span class="eyebrow">Human evaluation for AI agent teams</span>
+    <h1>Know when your agent is wrong before your customers do.</h1>
+    <p>We build graded test sets for your agent, grade its real outputs, and check whether your AI grader actually agrees with humans. You get a clear report on what breaks and why.</p>
+    <div class="cta"><a class="btn primary" href="#sample">See a sample report</a><a class="btn ghost" href="#pilot">How a pilot works</a></div>
+  </header>
+
+  <section id="what">
+    <span class="eyebrow">What we do</span>
+    <h2>Four kinds of work, done by a dedicated team that learns your product</h2>
+    <div class="grid">
+      <div class="svc"><span class="eyebrow">01 Build</span><h3>Golden test sets</h3><p>Realistic inputs for your agent, the correct answer for each, and a rubric for what counts as a pass.</p></div>
+      <div class="svc"><span class="eyebrow">02 Grade</span><h3>Output review</h3><p>We grade your agent's real outputs inside your own eval tool and tag every failure by type.</p></div>
+      <div class="svc"><span class="eyebrow">03 Run</span><h3>Scenario testing</h3><p>We run your agent through scripted tasks, from browser flows to spreadsheet work, and record where it breaks.</p></div>
+      <div class="svc"><span class="eyebrow">04 Calibrate</span><h3>AI-grader checks</h3><p>Two graders label the same cases independently, then we measure where your LLM judge disagrees with them.</p></div>
+    </div>
+    <p class="muted">Works inside Braintrust, LangSmith, Langfuse, Label Studio or a shared sheet. Your data stays in your tools.</p>
+  </section>
+
+  <section id="sample">
+    <span class="eyebrow">Sample report</span>
+    <h2>What you receive at the end of a pilot</h2>
+    <p class="muted">This is the format of a real deliverable. The agent, invoices and numbers below are invented for illustration.</p>
+
+    <article class="report">
+      <div class="banner">Illustrative example. Not real client data or real results.</div>
+      <div class="rbody">
+        <div class="rhead">
+          <div><h3 style="font-size:1.3rem">Invoice extraction agent: evaluation report</h3><p class="muted" style="font-size:.95rem">50 invoices, double-graded, with AI-grader comparison</p></div>
+          <div class="meta">CLIENT: Example Co.<br>TEST SET: 50 invoices (20 digital, 15 scanned, 10 multi-page, 5 non-USD)<br>GRADERS: 2 independent + 1 adjudicator</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><b>39 / 50</b><span>invoices fully correct (78%)</span></div>
+          <div class="stat"><b>14</b><span>errors found across 11 failing invoices</span></div>
+          <div class="stat"><b>86%</b><span>AI grader agreement with humans</span></div>
+          <div class="stat"><b>94%</b><span>agreement between the two human graders before adjudication</span></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h3>Accuracy by field</h3>
+          <div class="tablewrap"><table>
+            <thead><tr><th>Field</th><th class="num">Correct</th><th>Accuracy</th></tr></thead>
+            <tbody>
+              <tr><td>Vendor name</td><td class="num">49 / 50</td><td><span class="bar" style="width:98px"></span>98%</td></tr>
+              <tr><td>Invoice date</td><td class="num">46 / 50</td><td><span class="bar" style="width:92px"></span>92%</td></tr>
+              <tr><td>Total due</td><td class="num">45 / 50</td><td><span class="bar" style="width:90px"></span>90%</td></tr>
+              <tr><td>Line items (all present and correct)</td><td class="num">36 / 50</td><td><span class="bar" style="width:72px"></span>72%</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h3>Where it fails</h3>
+          <div class="tablewrap"><table>
+            <thead><tr><th>Failure type</th><th class="num">Count</th><th>Where it shows up</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill tag">missed_line_items</span></td><td class="num">6</td><td>Multi-page invoices; items on page 2+ are dropped</td></tr>
+              <tr><td><span class="pill tag">total_is_subtotal</span></td><td class="num">3</td><td>Takes the pre-tax subtotal as the total due</td></tr>
+              <tr><td><span class="pill tag">date_day_month_swap</span></td><td class="num">2</td><td>Non-US invoices written DD/MM/YYYY</td></tr>
+              <tr><td><span class="pill tag">currency_dropped</span></td><td class="num">2</td><td>EUR and GBP amounts returned with no currency</td></tr>
+              <tr><td><span class="pill tag">wrong_vendor_entity</span></td><td class="num">1</td><td>Used the remit-to company instead of the seller</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h3>Graded cases</h3>
+          <div class="tabs" role="tablist" aria-label="Example graded cases">
+            <button role="tab" id="tab-0" aria-selected="true" data-i="0">INV-014</button>
+            <button role="tab" id="tab-1" aria-selected="false" data-i="1">INV-027</button>
+            <button role="tab" id="tab-2" aria-selected="false" data-i="2">INV-038</button>
+            <button role="tab" id="tab-3" aria-selected="false" data-i="3">INV-003</button>
+          </div>
+          <div id="casebox" role="tabpanel" aria-live="polite"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h3>Can you trust your AI grader?</h3>
+          <p>Your LLM judge agreed with human graders on 43 of 50 invoices (Cohen's kappa 0.61). It was reliable on vendor, date and total. It was not reliable on line items: it marked 5 of the 6 invoices with missing line items as complete, and failed 2 correct outputs.</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h3>Recommendations</h3>
+          <ol class="recs">
+            <li><span>Extract multi-page invoices page by page and merge, instead of in one pass. This targets 6 of 14 errors.</span></li>
+            <li><span>Add a deterministic check that line items plus tax equal the total. It would catch every <code>total_is_subtotal</code> and most <code>missed_line_items</code> errors.</span></li>
+            <li><span>Don't rely on the LLM judge for line items. Use the arithmetic check above, and keep the judge for vendor, date and total.</span></li>
+            <li><span>Add 10 more non-US invoices to the test set; date and currency errors cluster there.</span></li>
+          </ol>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section id="pilot">
+    <span class="eyebrow">Pilot</span>
+    <h2>Start with one two-week pilot</h2>
+    <div class="pilot">
+      <ol class="steps">
+        <li><span class="when">Day 0</span><span>Mutual NDA. You pick one agent and give us access to its outputs in your eval tool.</span></li>
+        <li><span class="when">Days 1–3</span><span>We agree on a rubric with you and build a 50-case test set from your real traffic.</span></li>
+        <li><span class="when">Days 4–10</span><span>Two graders label every case independently; disagreements are adjudicated.</span></li>
+        <li><span class="when">Days 11–14</span><span>We compare your AI grader against the human labels and deliver the report and the graded set.</span></li>
+      </ol>
+      <div class="price">
+        <span class="eyebrow">Pilot price</span>
+        <b class="big">$1,500</b>
+        <ul><li>50 double-graded cases from your outputs</li><li>Failure breakdown and recommendations</li><li>AI-grader agreement report</li><li>The graded test set is yours to keep</li></ul>
+        <a class="btn primary" href="#contact" style="text-align:center">Ask about a pilot</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <span class="eyebrow">About</span>
+    <h2>Who's behind this</h2>
+    <div class="about">
+      <div>
+        <h3>Ethan Schneider, founder</h3>
+        <p class="muted">Industrial and Systems Engineering at USC Viterbi, minor in AI applications, and an alum of the USC Marshall Greif Incubator. At a large tech company he calibrated an LLM grading rubric against about 4,600 labeled records. He runs every early project personally.</p>
+      </div>
+      <div>
+        <h3>The team, in Nairobi</h3>
+        <p class="muted">We're forming a dedicated team of IT graduates in Nairobi with a local AI solutions partner. The same people stay on your account, so they learn your product. Kenya is UTC+3, so graded work is often ready by the start of the US day.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <h2>Talk to us</h2>
+    <p class="muted">Building an agent and not sure how good it really is? Send a note on LinkedIn.</p>
+    <div class="copyrow"><code id="li">linkedin.com/in/Ethanschneider5</code><button type="button" id="copybtn">Copy</button><a href="https://www.linkedin.com/in/Ethanschneider5" target="_blank" rel="noopener">Open LinkedIn</a></div>
+    <p class="muted" style="font-size:.85rem">Groundline Evals is a working name.</p>
+  </footer>
+</div>
+
+<script>
+const CASES=[
+ {id:"INV-014",kind:"Multi-page, scanned",pass:false,tags:["missed_line_items"],
+  input:"Northfield Supply Co. — Invoice 88213\n2 pages · 7 line items (4 on p.1, 3 on p.2)\nTotal due: $4,912.40",
+  agent:'{\n  "vendor": "Northfield Supply Co.",\n  "date": "2026-03-04",\n  "line_items": 4,\n  "total": 4912.40\n}',
+  gold:'{\n  "vendor": "Northfield Supply Co.",\n  "date": "2026-03-04",\n  "line_items": 7,\n  "total": 4912.40\n}',
+  bad:'"line_items": 4',
+  note:"Dropped the 3 items on page 2. The total is right only because it was read from page 2's footer, so a total-only check would miss this. AI grader marked it complete."},
+ {id:"INV-027",kind:"Digital PDF",pass:false,tags:["total_is_subtotal"],
+  input:"Brightway Logistics — Invoice BW-2291\nSubtotal $1,240.00 · Sales tax $105.40\nTotal due: $1,345.40",
+  agent:'{\n  "vendor": "Brightway Logistics",\n  "date": "2026-02-18",\n  "line_items": 3,\n  "total": 1240.00\n}',
+  gold:'{\n  "vendor": "Brightway Logistics",\n  "date": "2026-02-18",\n  "line_items": 3,\n  "total": 1345.40\n}',
+  bad:'"total": 1240.00',
+  note:"Returned the pre-tax subtotal as the total due. AI grader caught this one."},
+ {id:"INV-038",kind:"Non-US, scanned",pass:false,tags:["date_day_month_swap","currency_dropped"],
+  input:"Kessler GmbH — Rechnung 2026-0417\nDatum: 05/03/2026\nGesamtbetrag: 2.180,00 EUR",
+  agent:'{\n  "vendor": "Kessler GmbH",\n  "date": "2026-05-03",\n  "line_items": 2,\n  "total": 2180.00,\n  "currency": null\n}',
+  gold:'{\n  "vendor": "Kessler GmbH",\n  "date": "2026-03-05",\n  "line_items": 2,\n  "total": 2180.00,\n  "currency": "EUR"\n}',
+  bad:'"date": "2026-05-03"|"currency": null',
+  note:"Read 05/03 as May 3 instead of 5 March, and dropped the currency. Two errors on one invoice."},
+ {id:"INV-003",kind:"Digital PDF",pass:true,tags:[],
+  input:"Alder & Finch Design — Invoice 1042\n1 page · 2 line items\nTotal due: $3,600.00",
+  agent:'{\n  "vendor": "Alder & Finch Design",\n  "date": "2026-01-29",\n  "line_items": 2,\n  "total": 3600.00\n}',
+  gold:'{\n  "vendor": "Alder & Finch Design",\n  "date": "2026-01-29",\n  "line_items": 2,\n  "total": 3600.00\n}',
+  bad:"",
+  note:"All fields correct. Both graders and the AI grader agree."}
+];
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function mark(text,bad){let h=esc(text);if(!bad)return h;bad.split("|").forEach(b=>{const e=esc(b);h=h.split(e).join('<span class="bad">'+e+'</span>')});return h}
+function show(i){
+  const c=CASES[i];
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.i==i?'true':'false'));
+  const box=document.getElementById('casebox');
+  box.setAttribute('aria-labelledby','tab-'+i);
+  box.innerHTML=
+   '<div class="case">'+
+    '<div class="pane"><h4>Input · '+esc(c.kind)+'</h4><pre>'+esc(c.input)+'</pre></div>'+
+    '<div class="pane"><h4>Agent output</h4><pre>'+mark(c.agent,c.bad)+'</pre></div>'+
+    '<div class="pane"><h4>Correct answer</h4><pre>'+esc(c.gold)+'</pre></div>'+
+   '</div>'+
+   '<div class="verdict" style="margin-top:12px"><span class="pill '+(c.pass?'pass':'fail')+'">'+(c.pass?'PASS':'FAIL')+'</span>'+
+    c.tags.map(t=>'<span class="pill tag">'+t+'</span>').join('')+'<span class="muted">'+esc(c.note)+'</span></div>';
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.i)));
+show(0);
+document.getElementById('copybtn').addEventListener('click',async e=>{
+  const t=document.getElementById('li').textContent;
+  try{await navigator.clipboard.writeText(t);e.target.textContent='Copied'}
+  catch(_){const r=document.createRange();r.selectNodeContents(document.getElementById('li'));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent='Selected'}
+});
+</script>
+</body>
+</html>
