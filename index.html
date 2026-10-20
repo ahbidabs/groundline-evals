@@ -57,6 +57,11 @@ nav{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-
 .svc{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .svc .eyebrow{color:var(--muted)}
 .svc p{font-size:.95rem;color:var(--muted)}
+.agents{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:0;border-top:1px solid var(--line)}
+.agent{padding:18px 4px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px;min-width:0}
+.agent p{font-size:.93rem;color:var(--muted)}
+.agent b{color:var(--ink);font-weight:600}
+@media (min-width:640px){.agent{padding:18px 20px 18px 0}}
 /* report */
 .report{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .banner{background:var(--warn-soft);color:var(--warn);font-size:.85rem;padding:10px 20px;border-bottom:1px solid var(--line);font-weight:500}
@@ -110,7 +115,7 @@ footer{border-top:1px solid var(--line);padding-top:24px;display:flex;flex-direc
 <div class="wrap">
   <nav>
     <div class="logo"><i aria-hidden="true"></i>Groundline Evals</div>
-    <div class="navlinks"><a href="#what">What we do</a><a href="#sample">Sample report</a><a href="#pilot">Pilot</a><a href="#about">About</a></div>
+    <div class="navlinks"><a href="#what">What we do</a><a href="#agents">Agents we test</a><a href="#sample">Sample report</a><a href="#pilot">Pilot</a><a href="#about">About</a></div>
   </nav>
 
   <header class="hero">
@@ -130,6 +135,32 @@ footer{border-top:1px solid var(--line);padding-top:24px;display:flex;flex-direc
       <div class="svc"><span class="eyebrow">04 Calibrate</span><h3>AI-grader checks</h3><p>Two graders label the same cases independently, then we measure where your LLM judge disagrees with them.</p></div>
     </div>
     <p class="muted">Works inside Braintrust, LangSmith, Langfuse, Label Studio or a shared sheet. Your data stays in your tools.</p>
+  </section>
+
+  <section id="agents">
+    <span class="eyebrow">Agents we test</span>
+    <h2>Agents whose outputs have a right answer</h2>
+    <p class="muted">We focus on agents where a careful, trained grader can check the work against a correct answer or a clear rubric.</p>
+    <div class="agents">
+      <div class="agent"><h3>Document and invoice extraction</h3>
+        <p><b>Typical failures:</b> drops line items on page 2, reads the subtotal as the total, swaps day and month on non-US dates.</p>
+        <p><b>We check:</b> every extracted field against a hand-built correct answer.</p></div>
+      <div class="agent"><h3>Scheduling and email agents</h3>
+        <p><b>Typical failures:</b> books the wrong time zone, misreads what the person asked for, sends a reply in the wrong tone.</p>
+        <p><b>We check:</b> each action the agent took, against what the request actually needed.</p></div>
+      <div class="agent"><h3>Voice agents</h3>
+        <p><b>Typical failures:</b> gives wrong policy details, talks over the caller, misses when to hand off to a person.</p>
+        <p><b>We check:</b> recorded calls against your scorecard, and where your AI grader disagrees with us.</p></div>
+      <div class="agent"><h3>Compliance and risk review</h3>
+        <p><b>Typical failures:</b> closes a real alert as a false positive, or escalates a harmless one.</p>
+        <p><b>We check:</b> each decision against an adjudicated answer, with the reason it was right or wrong.</p></div>
+      <div class="agent"><h3>Browser and computer-use agents</h3>
+        <p><b>Typical failures:</b> stuck on a login or pop-up, clicks the wrong item, reports success on an unfinished task.</p>
+        <p><b>We check:</b> scripted tasks run in your sandbox, reviewed step by step from the recording.</p></div>
+      <div class="agent"><h3>Spreadsheet and finance copilots</h3>
+        <p><b>Typical failures:</b> wrong cell references, hard-coded numbers, a forecast whose statements don't tie out.</p>
+        <p><b>We check:</b> formulas and outputs against a correct version of the model.</p></div>
+    </div>
   </section>
 
   <section id="sample">
